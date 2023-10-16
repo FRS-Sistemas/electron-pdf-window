@@ -8236,7 +8236,7 @@ var pdfjsWebLibs;
           scratchCanvas = document.createElement('canvas');
         }
         // The size of the canvas in pixels for printing.
-        var PRINT_RESOLUTION = 150;
+        var PRINT_RESOLUTION = 600;
         var PRINT_UNITS = PRINT_RESOLUTION / 72.0;
         scratchCanvas.width = Math.floor(size.width * PRINT_UNITS);
         scratchCanvas.height = Math.floor(size.height * PRINT_UNITS);
@@ -8369,6 +8369,9 @@ var pdfjsWebLibs;
       };
       var print = window.print;
       window.print = function print() {
+
+				console.log('------------')
+
         if (activeService) {
           console.warn('Ignored window.print() because of a pending print job.');
           return;

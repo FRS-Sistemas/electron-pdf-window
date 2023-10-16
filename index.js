@@ -7,10 +7,9 @@ const extend = require('deep-extend')
 const got = require('got')
 
 const BrowserWindow = isRenderer
-  ? electron.remote.BrowserWindow : electron.BrowserWindow
+  ? require('@electron/remote').BrowserWindow : electron.BrowserWindow
 
 const PDF_JS_PATH = path.join(__dirname, 'pdfjs', 'web', 'viewer.html')
-
 function isAlreadyLoadedWithPdfJs (url) {
   return url.startsWith(`file://${PDF_JS_PATH}?file=`)
 }
@@ -31,10 +30,6 @@ function hasPdfExtension (url) {
   return url.match(/\.pdf$/i)
 }
 
-function hasBlobData(url){
-  return url.match(/^blob:/i);
-}
-
 function isPDF (url) {
   return new Promise((resolve, reject) => {
     if (isAlreadyLoadedWithPdfJs(url)) {
@@ -43,8 +38,6 @@ function isPDF (url) {
       resolve(getMimeOfFile(url) === 'application/pdf')
     } else if (hasPdfExtension(url)) {
       resolve(true)
-    } else if(hasBlobData(url)) {
-      resolve(true);
     } else {
       got.head(url).then(res => {
         if (res.headers.location) {
@@ -72,20 +65,19 @@ class PDFWindow extends BrowserWindow {
     this.webContents.on('new-window', (event, url) => {
       event.preventDefault()
 
-      event.newGuest = new PDFWindow();
-      event.newGuest.loadURL(url);
-      event.newGuest.setMenu(null);
+      event.newGuest = new PDFWindow()
+      event.newGuest.loadURL(url)
     })
   }
 
   loadURL (url, options) {
-    return isPDF(url).then(isit => {
+    isPDF(url).then(isit => {
       if (isit) {
-        return super.loadURL(`file://${
+        super.loadURL(`file://${
           path.join(__dirname, 'pdfjs', 'web', 'viewer.html')}?file=${
             decodeURIComponent(url)}`, options)
       } else {
-        return super.loadURL(url, options)
+        super.loadURL(url, options)
       }
     }).catch(() => super.loadURL(url, options))
   }
@@ -93,27 +85,25 @@ class PDFWindow extends BrowserWindow {
 
 PDFWindow.addSupport = function (browserWindow) {
   browserWindow.webContents.on('will-navigate', (event, url) => {
-    event.preventDefault();
-    browserWindow.loadURL(url);
-    event.newGuest.setMenu(null);
+    event.preventDefault()
+    browserWindow.loadURL(url)
   })
 
   browserWindow.webContents.on('new-window', (event, url) => {
     event.preventDefault()
 
-    event.newGuest = new PDFWindow();
-    event.newGuest.loadURL(url);
-    event.newGuest.setMenu(null);
+    event.newGuest = new PDFWindow()
+    event.newGuest.loadURL(url)
   })
 
   const load = browserWindow.loadURL
   browserWindow.loadURL = function (url, options) {
-    return isPDF(url).then(isit => {
+    isPDF(url).then(isit => {
       if (isit) {
-        return load.call(browserWindow, `file://${PDF_JS_PATH}?file=${
+        load.call(browserWindow, `file://${PDF_JS_PATH}?file=${
           decodeURIComponent(url)}`, options)
       } else {
-        return load.call(browserWindow, url, options)
+        load.call(browserWindow, url, options)
       }
     })
   }
