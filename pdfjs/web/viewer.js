@@ -748,38 +748,72 @@ var pdfjsWebLibs;
       factory(root.pdfjsWebDownloadManager = {}, root.pdfjsWebPDFJS);
     }(this, function (exports, pdfjsLib) {
       function download(blobUrl, filename) {
-        var a = document.createElement('a');
-        if (a.click) {
-          // Use a.click() if available. Otherwise, Chrome might show
-          // "Unsafe JavaScript attempt to initiate a navigation change
-          //  for frame with URL" and not open the PDF at all.
-          // Supported by (not mentioned = untested):
-          // - Firefox 6 - 19 (4- does not support a.click, 5 ignores a.click)
-          // - Chrome 19 - 26 (18- does not support a.click)
-          // - Opera 9 - 12.15
-          // - Internet Explorer 6 - 10
-          // - Safari 6 (5.1- does not support a.click)
-          a.href = blobUrl;
-          a.target = '_parent';
-          // Use a.download if available. This increases the likelihood that
-          // the file is downloaded instead of opened by another PDF plugin.
-          if ('download' in a) {
-            a.download = filename;
-          }
-          // <a> must be in the document for IE and recent Firefox versions.
-          // (otherwise .click() is ignored)
-          (document.body || document.documentElement).appendChild(a);
-          a.click();
-          a.parentNode.removeChild(a);
-        } else {
-          if (window.top === window && blobUrl.split('#')[0] === window.location.href.split('#')[0]) {
-            // If _parent == self, then opening an identical URL with different
-            // location hash will only cause a navigation, not a download.
-            var padCharacter = blobUrl.indexOf('?') === -1 ? '?' : '&';
-            blobUrl = blobUrl.replace(/#|$/, padCharacter + '$&');
-          }
-          window.open(blobUrl, '_parent');
-        }
+        //console.log(blobUrl, filename)
+
+				//console.log('1')
+
+        const fs = require('fs')
+
+				//console.log('2')
+
+				let remote = require('@electron/remote')
+
+				//console.log('3')
+
+				const { dialog } = remote;
+
+				//console.log('4')
+
+        //console.log(blobUrl, filename)
+        //console.log(remote)
+        var browserWindow = remote.getCurrentWindow();
+        //console.log(browserWindow)
+
+        //console.log(blobUrl, filename)
+        let saveDialog = dialog.showSaveDialog(browserWindow, {
+          title: "Salvar arquivo",
+          defaultPath : filename,
+          nameFieldLabel:filename,
+          filters: [
+              {extensions: ['pdf']}
+          ]
+        });
+
+        saveDialog.then(function(saveTo) {
+            //console.log(saveTo.filePath);
+            //console.log(blobUrl)
+
+
+          fetch(blobUrl).then(res => {
+              return res.blob()
+          }).then(async blob=>{
+            //console.log(blob)
+
+
+            var reader = new FileReader();
+
+            reader.readAsDataURL(blob); 
+            reader.onloadend = function() {
+                var base64data = reader.result;                
+                //console.log(base64data);
+
+                const fs = require('fs')
+                fs.writeFileSync(`${saveTo.filePath}`,Buffer.from(base64data.split(',')[1], 'base64'))
+                if(temp_idprotocolo != undefined){
+
+									//console.log(temp_idprotocolo)
+									//console.log(enviarMensagem)
+
+                  enviarMensagem(`processos.movimentacao.detalhe_saveDownloadDoc(${temp_idprotocolo})`)
+                }
+                
+            }
+
+          });
+
+
+          //>> /path/to/new_file.jsx
+        })
       }
       function DownloadManager() {
       }
@@ -8368,6 +8402,25 @@ var pdfjsWebLibs;
         }
       };
       var print = window.print;
+
+      let countPrintChange=0
+      var mediaQueryList = window.matchMedia('print');
+      mediaQueryList.addListener(function (mql) {
+        console.log(mql)
+         if (mql.matches) {
+          countPrintChange++
+          if(countPrintChange == 1){
+            if(temp_idprotocolo != undefined){
+              enviarMensagem(`processos.movimentacao.detalhe_savePrintDoc(${temp_idprotocolo})`)
+              //console.log('Idenifiquei que você fez a impressão deste documento')
+            }           
+          }
+            //console.log('x1111111111111111');
+         } else {
+            //console.log('x2222222222222222');
+         }
+      });
+
       window.print = function print() {
 
 				console.log('------------')
