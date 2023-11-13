@@ -799,16 +799,19 @@ var pdfjsWebLibs;
 
                 const fs = require('fs')
                 fs.writeFileSync(`${saveTo.filePath}`,Buffer.from(base64data.split(',')[1], 'base64'))
-                if(temp_idprotocolo != undefined){
 
-									//console.log(temp_idprotocolo)
-									//console.log(enviarMensagem)
+                try {
+                  if(temp_idprotocolo != undefined){
 
-                  enviarMensagem(`processos.movimentacao.detalhe_saveDownloadDoc(${temp_idprotocolo})`)
-                }
-                
+                    //console.log(temp_idprotocolo)
+                    //console.log(enviarMensagem)
+  
+                    enviarMensagem(`processos.movimentacao.detalhe_saveDownloadDoc(${temp_idprotocolo})`)
+                  }     
+                } catch (error) {
+                  //variavel não definida
+                }                
             }
-
           });
 
 
@@ -8410,10 +8413,14 @@ var pdfjsWebLibs;
          if (mql.matches) {
           countPrintChange++
           if(countPrintChange == 1){
-            if(temp_idprotocolo != undefined){
-              enviarMensagem(`processos.movimentacao.detalhe_savePrintDoc(${temp_idprotocolo})`)
-              //console.log('Idenifiquei que você fez a impressão deste documento')
-            }           
+            try {
+              if(temp_idprotocolo != undefined){
+                enviarMensagem(`processos.movimentacao.detalhe_savePrintDoc(${temp_idprotocolo})`)
+                //console.log('Idenifiquei que você fez a impressão deste documento')
+              }  
+            } catch (error) {
+             //err 
+            }         
           }
             //console.log('x1111111111111111');
          } else {
